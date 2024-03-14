@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Capture and Analyze Image from Camera</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  </head>
+  <body>
+    <div class="col-md-6">
+      <video id="videoElement" width="400" height="300" autoplay></video>
+      <button id="captureButton" class="btn btn-primary">Capture Image</button>
+    </div>
+    <div class="col-md-6">
+      <div id="resultContainer"></div>
+    </div>
+    <div id="resultHeading"></div>
+    <canvas id="canvas" style="display: none"></canvas>
+  </body>
+  <script>
+    $(document).ready(function () {
+      var video = document.getElementById("videoElement");
+      var canvas = document.getElementById("canvas");
+      var context = canvas.getContext("2d");
+      var captureButton = document.getElementById("captureButton");
+
+      // Access the camera and display the video feed
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then(function (stream) {
+          video.srcObject = stream;
+        })
+        .catch(function (error) {
+          console.error("Could not access the camera:", error);
+        });
+
+      captureButton.addEventListener("click", function () {
+        // Capture the image from the video stream
+        context.drawImage(video, 0, 0, 400, 300);
+        canvas.toBlob(function (blob) {
+          processImage(blob);
+        });
+      });
+
+      // Function to process the captured image (replace with your implementation)
+      function processImage(imageData) {
+        var formData = new FormData();
+        formData.append("image", imageData); // Append the captured image data
+
+        $.ajax({
+          url: "https://cv-instance-analyseimg-northeur.cognitiveservices.azure.com/computervision/imageanalysis:analyze?api-version=2024-02-01&features=people&model-version=latest&language=en&gender-neutral-caption=False",
+          type: "POST",
+          //   data: formData,
+          data: JSON.stringify({
+            url: "https://raw.githubusercontent.com/Azure/azure-sdk-for-java/main/sdk/vision/azure-ai-vision-imageanalysis/src/samples/java/com/azure/ai/vision/imageanalysis/sample.jpg",
+          }),
+          contentType: "application/json",
+
+          //   contentType: false, // Set to false to prevent automatic content type handling
+          //   processData: false, // Disable automatic data processing for FormData
+          headers: {
+            "Ocp-Apim-Subscription-Key": "169ba26709814440839c99da449b5421", // Replace with your actual key (stored securely)
+          },
+          success: function (response) {
+            var peopleResult = response.peopleResult.values;
+            var highestConfidence = 0;
+
+            // Loop through the peopleResult array to find the highest confidence
+            for (var i = 0; i < peopleResult.length; i++) {
+              var person = peopleResult[i];
+              if (person.confidence > highestConfidence) {
+                highestConfidence = person.confidence;
+              }
+            }
+
+            // Check if the highest confidence is greater than 0.7
+            if (highestConfidence > 0.7) {
+              // Display message indicating the presence of a person
+              var resultHeading = document.getElementById("resultHeading");
+              resultHeading.innerHTML =
+                '<h2 class="result-heading">This video contains a live person</h2>';
+            } else {
+              // Display message indicating no person detected or confidence too low
+              var resultHeading = document.getElementById("resultHeading");
+              resultHeading.innerHTML =
+                '<h2 class="result-heading">No live person detected in the video</h2>';
+            }
+          },
+          error: function (error) {
+            console.error("Error processing image:", error);
+          },
+        });
+      }
+    });
+  </script>
+</html>
