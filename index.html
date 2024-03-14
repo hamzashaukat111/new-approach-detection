@@ -52,9 +52,9 @@
           //   data: JSON.stringify({
           //     url: "https://raw.githubusercontent.com/Azure/azure-sdk-for-java/main/sdk/vision/azure-ai-vision-imageanalysis/src/samples/java/com/azure/ai/vision/imageanalysis/sample.jpg",
           //   }),
-          //   contentType: "application/json",
 
-          //   contentType: false, // Set to false to prevent automatic content type handling
+          contentType: "application/octet-stream",
+          contentType: false, // Set to false to prevent automatic content type handling
           processData: false, // Disable automatic data processing for FormData
           headers: {
             "Ocp-Apim-Subscription-Key": "169ba26709814440839c99da449b5421", // Replace with your actual key (stored securely)
